@@ -19,6 +19,8 @@ Status possiveis: `aceita` | `substituida` | `depreciada`
 | [005](005-event-driven-rabbitmq-outbox.md) | Event-driven com RabbitMQ + Outbox Pattern | aceita | 2026-03-10 |
 | [006](006-observability-stack.md) | Stack de Observabilidade (OTel + Prometheus + Grafana + Jaeger + Loki) | aceita | 2026-03-10 |
 | [007](007-signalr-realtime-redis.md) | SignalR para real-time com Redis backplane | aceita | 2026-03-10 |
+| [008](008-kind-cluster-local.md) | KIND como cluster Kubernetes local | aceita | 2026-03-11 |
+| [009](009-kustomize-manifests.md) | Kustomize para gerenciamento de manifestos Kubernetes | aceita | 2026-03-11 |
 
 ## Processo de revisao
 
