@@ -151,6 +151,14 @@ jobs:
             ${{ env.IMAGE_PREFIX }}/ai-processing:${{ github.sha }}
             ${{ env.IMAGE_PREFIX }}/ai-processing:latest
 
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE_PREFIX }}/ai-processing:${{ github.sha }}
+          format: table
+          exit-code: 0
+          severity: CRITICAL,HIGH
+
   build-frontend:
     name: Build Frontend
     runs-on: ubuntu-latest
@@ -177,3 +185,11 @@ jobs:
           tags: |
             ${{ env.IMAGE_PREFIX }}/frontend:${{ github.sha }}
             ${{ env.IMAGE_PREFIX }}/frontend:latest
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE_PREFIX }}/frontend:${{ github.sha }}
+          format: table
+          exit-code: 0
+          severity: CRITICAL,HIGH
