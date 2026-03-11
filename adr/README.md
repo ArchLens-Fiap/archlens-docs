@@ -12,7 +12,7 @@ Status possiveis: `aceita` | `substituida` | `depreciada`
 
 | ADR | Titulo | Status | Data |
 |-----|--------|--------|------|
-| [001](001-monorepo-clean-architecture.md) | Monorepo com Clean Architecture por servico | aceita | 2026-03-10 |
+| [001](001-monorepo-clean-architecture.md) | Polyrepo com Clean Architecture por servico | aceita | 2026-03-10 |
 | [002](002-polyglot-dotnet-python.md) | Arquitetura Polyglot (.NET 9 + Python) | aceita | 2026-03-10 |
 | [003](003-multi-provider-ai-consensus.md) | Multi-provider AI com Consensus Engine | aceita | 2026-03-10 |
 | [004](004-saga-orchestration-masstransit.md) | SAGA Orquestrada com MassTransit | aceita | 2026-03-10 |
