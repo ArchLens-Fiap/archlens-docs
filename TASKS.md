@@ -666,6 +666,22 @@
 - [ ] SonarCloud: configurar Quality Gate (80%+ coverage, badges nos READMEs)
 - [ ] Verificar cobertura >= 90% em cada servico antes de seguir
 
+#### 9.2.1 Testes de Integração com Testcontainers (meta: atingir 90%+ real)
+
+> Atualmente a cobertura das camadas Domain + Application esta em: Upload 90.1%, Auth ~94.6%, Report ~81%.
+> Para atingir 90%+ nos tres servicos precisamos de testes de integracao com banco real (via Testcontainers).
+
+- [ ] **Upload**: Testcontainers PostgreSQL - testar `DiagramUploadRepository` (GetByFileHash, GetPaged, GetAllByUserId)
+- [ ] **Upload**: Testcontainers PostgreSQL - testar `AnalysisProcessRepository` (GetByDiagramUpload, GetByStatus)
+- [ ] **Upload**: `WebApplicationFactory` - integration tests com InMemory DB para endpoints de upload e listagem
+- [ ] **Auth**: Testcontainers PostgreSQL - testar `UserRepository` (GetByUsername, GetByEmail, ExistsByUsernameOrEmail)
+- [ ] **Auth**: `WebApplicationFactory` - integration tests para login, register, delete account
+- [ ] **Report**: Testcontainers MongoDB - testar `ReportRepository` (GetById, GetByAnalysisId, List, Count)
+- [ ] **Report**: `WebApplicationFactory` - integration tests para listagem e consulta de reports
+- [ ] **Orchestrator**: MassTransit `TestHarness` - testar `AnalysisSagaStateMachine` (happy path, retry, falha do provider)
+- [ ] Pacote NuGet necessario: `Testcontainers.PostgreSql`, `Testcontainers.MongoDb`, `MassTransit.Testing`
+- [ ] Verificar cobertura >= 90% em cada servico apos adicionar testes de integracao
+
 ### 9.3 Observabilidade - OpenTelemetry .NET
 
 > Necessario para traces distribuidos no Jaeger e metricas no Prometheus.
