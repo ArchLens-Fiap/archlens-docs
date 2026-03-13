@@ -668,7 +668,7 @@
 
 #### 9.2.1 Testes de Integração com Testcontainers (meta: atingir 90%+ real)
 
-> Atualmente a cobertura das camadas Domain + Application esta em: Upload 90.1%, Auth ~94.6%, Report ~81%.
+> Atualmente a cobertura das camadas Domain + Application esta em: Upload 90.1%, Auth ~80%, Report ~81%.
 > Para atingir 90%+ nos tres servicos precisamos de testes de integracao com banco real (via Testcontainers).
 
 - [ ] **Upload**: Testcontainers PostgreSQL - testar `DiagramUploadRepository` (GetByFileHash, GetPaged, GetAllByUserId)
@@ -714,6 +714,27 @@
 ---
 
 ## FASE 10 - Documentacao e Video (Semana 10: 12-22 Mai)
+
+### 10.0 Credenciais Cloud (fazer ANTES de qualquer teste)
+
+> Sem essas chaves, o sistema sobe localmente mas IA nao analisa e cloud nao funciona.
+> Tempo estimado: 30 minutos para criar todas as contas gratuitas.
+
+**Bancos de Dados Cloud**
+- [ ] Criar conta Neon (console.neon.tech) -> projeto `archlens` -> criar 3 databases (archlens_auth, archlens_upload, archlens_orchestrator) -> copiar connection string do pooler -> atualizar .secrets-academico.env
+- [ ] Criar conta MongoDB Atlas (cloud.mongodb.com) -> cluster FREE tier `archlens` (Sao Paulo sa-east-1) -> criar database `archlens_reports` -> criar DB user -> copiar connection string -> atualizar .secrets-academico.env
+- [ ] Criar conta Upstash (console.upstash.com) -> database `archlens-notifications` (Sao Paulo) -> copiar endpoint + REST token -> atualizar .secrets-academico.env
+
+**Providers de IA (ao menos 1 obrigatorio para o sistema funcionar)**
+- [ ] OBRIGATORIO (gratuito, sem cartao): Criar API Key no Google AI Studio (aistudio.google.com) -> copiar GOOGLE_API_KEY -> atualizar .secrets-academico.env
+- [ ] RECOMENDADO (gratuito com GitHub Pro): Gerar Personal Access Token no GitHub (github.com/settings/tokens, scope: nenhum necessario) -> usar como GITHUB_MODELS_API_KEY para acessar GPT-4o + Claude 3.5 Sonnet via GitHub Models (models.inference.ai.azure.com) -> atualizar .secrets-academico.env
+- [ ] OPCIONAL (pago): Obter OPENAI_API_KEY em platform.openai.com (necessario saldo) -> atualizar .secrets-academico.env
+- [ ] OPCIONAL (pago): Obter ANTHROPIC_API_KEY em console.anthropic.com (necessario saldo) -> atualizar .secrets-academico.env
+
+**Aplicar as chaves**
+- [ ] Atualizar `.secrets-academico.env` com todas as chaves obtidas
+- [ ] Configurar variaveis de ambiente no docker-compose.yml (ou .env) para o AI Processing Service
+- [ ] Testar conectividade: `mongosh <atlas-connection-string>` e `psql <neon-connection-string>`
 
 ### 10.1 Database Seeders + Teste End-to-End
 
