@@ -1,7 +1,6 @@
 # ADR-006: Stack de Observabilidade (OTel + Prometheus + Grafana + Jaeger + Loki)
 
 **Status**: aceita
-**Data**: 2026-03-10
 **Fase**: 1
 
 ## Contexto

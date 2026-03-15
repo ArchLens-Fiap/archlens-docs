@@ -1,7 +1,6 @@
 # ADR-004: SAGA Orquestrada com MassTransit
 
 **Status**: aceita
-**Data**: 2026-03-10
 **Fase**: 4
 
 ## Contexto

@@ -1,7 +1,6 @@
 # ADR-009: Kustomize para gerenciamento de manifestos Kubernetes
 
 **Status**: aceita
-**Data**: 2026-03-11
 **Fase**: 8
 
 ## Contexto

@@ -1,7 +1,6 @@
 # ADR-002: Arquitetura Polyglot (.NET 9 + Python)
 
 **Status**: aceita
-**Data**: 2026-03-10
 **Fase**: 1
 
 ## Contexto

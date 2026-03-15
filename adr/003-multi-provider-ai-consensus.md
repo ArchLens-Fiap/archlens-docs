@@ -1,7 +1,6 @@
 # ADR-003: Multi-provider AI com Consensus Engine
 
 **Status**: aceita
-**Data**: 2026-03-10
 **Fase**: 3
 
 ## Contexto
@@ -13,12 +12,12 @@ O sistema precisa analisar diagramas de arquitetura usando IA. Depender de um un
 
 ## Decisao
 
-Usar **3 providers de IA em paralelo** (OpenAI GPT-4o Vision, Google Gemini 2.0 Flash, Anthropic Claude Sonnet 4) com um **Consensus Engine** que faz merge dos resultados.
+Usar **2 providers de IA em paralelo** (OpenAI GPT-4o Vision via GitHub Models, Google Gemini 2.0 Flash) com um **Consensus Engine** que faz merge dos resultados. A arquitetura suporta N providers — novos podem ser adicionados apenas registrando no `ProviderRegistry`.
 
 ### Pipeline
 
 ```
-Diagrama → Preprocessing → [OpenAI | Gemini | Claude] → Consensus Engine → Guardrails → Resultado
+Diagrama → Preprocessing → [OpenAI GPT-4o | Gemini 2.0 Flash] → Consensus Engine → Guardrails → Resultado
 ```
 
 ### Consensus Engine
@@ -45,17 +44,18 @@ Diagrama → Preprocessing → [OpenAI | Gemini | Claude] → Consensus Engine �
 ## Consequencias
 
 **Positivas**:
-- Resiliencia: sistema funciona com 1/3 providers ativos
+- Resiliencia: sistema funciona com 1/N providers ativos
 - Confianca mensuravel: score de consenso por componente
 - Reducao de alucinacoes: cross-reference entre providers
 - Diferencial competitivo: nenhum outro time tera isso
 
 **Negativas**:
-- Custo 3x maior por analise (mitigado por cache Redis com hash dedup)
-- Latencia: espera o mais lento dos 3 (mitigado por timeout de 60s e chamadas paralelas)
+- Custo Nx maior por analise (mitigado por cache Redis com hash dedup)
+- Latencia: espera o mais lento dos N (mitigado por timeout de 60s e chamadas paralelas)
 - Complexidade do Consensus Engine
 
 **Metricas de validacao**:
 - Confidence > 70% em media para diagramas padrao (microservices, monolito)
-- Tempo total < 60s com 3 providers
+- Tempo total < 60s com N providers em paralelo
 - Sistema funcional com apenas 1 provider ativo
+- Providers atuais: OpenAI GPT-4o (via GitHub Models, gratuito) e Google Gemini 2.0 Flash (via Google AI Studio, gratuito)

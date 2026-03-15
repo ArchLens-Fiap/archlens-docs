@@ -1,7 +1,6 @@
 # ADR-008: KIND como cluster Kubernetes local
 
 **Status**: aceita
-**Data**: 2026-03-11
 **Fase**: 8
 
 ## Contexto

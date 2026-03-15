@@ -1,7 +1,6 @@
 # ADR-005: Event-driven com RabbitMQ + Outbox Pattern
 
 **Status**: aceita
-**Data**: 2026-03-10
 **Fase**: 2
 
 ## Contexto

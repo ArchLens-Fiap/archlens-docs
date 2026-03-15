@@ -1,7 +1,6 @@
 # ADR-001: Polyrepo com Clean Architecture por servico
 
 **Status**: aceita
-**Data**: 2026-03-10
 **Fase**: 1
 
 ## Contexto

@@ -1,7 +1,6 @@
 # ADR-007: SignalR para real-time com Redis backplane
 
 **Status**: aceita
-**Data**: 2026-03-10
 **Fase**: 4
 
 ## Contexto
