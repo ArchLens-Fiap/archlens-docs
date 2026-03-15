@@ -13,6 +13,8 @@
 [![Kubernetes](https://img.shields.io/badge/K8s-KinD-326CE5?logo=kubernetes&logoColor=white)](https://kubernetes.io)
 [![License](https://img.shields.io/badge/License-Academic-green)]()
 
+**Autor:** Rafael Henrique Barbosa Pereira (RM366243) | FIAP - Pos-Tech Software Architecture + IA para Devs | Fase 5 - Hackathon (12SOAT + 6IADT)
+
 </div>
 
 ---
@@ -27,7 +29,7 @@ Em equipes de engenharia, revisoes de arquitetura dependem de especialistas seni
 
 ### Diferenciais
 
-- **Multi-provider AI com Consenso** - Nao depende de um unico modelo; combina respostas de GPT-4o, Gemini e Claude via fuzzy matching (Levenshtein)
+- **Multi-provider AI com Consenso** - Nao depende de um unico modelo; combina respostas de GPT-4o e Gemini via fuzzy matching (Levenshtein)
 - **SAGA Orquestrada** - Fluxo assincrono resiliente com retry automatico e rastreabilidade completa
 - **Real-time** - Atualizacoes instantaneas via SignalR + Redis backplane
 - **Observabilidade Integrada** - Admin dashboard com Prometheus, sem depender de ferramentas externas
@@ -38,6 +40,8 @@ Em equipes de engenharia, revisoes de arquitetura dependem de especialistas seni
 ## Arquitetura
 
 ### Visao Geral do Sistema
+
+#### Servicos e Gateway
 
 ```mermaid
 graph TB
@@ -58,8 +62,36 @@ graph TB
         NOTIF["Notification<br/><small>.NET 9 + SignalR</small>"]
     end
 
-    subgraph Mensageria
-        RMQ[["RabbitMQ"]]
+    FE <-->|"HTTPS + JWT"| GW
+    FE <-.->|"WebSocket"| NOTIF
+
+    GW --> AUTH
+    GW --> UPLOAD
+    GW --> ORCH
+    GW --> REPORT
+    GW --> AI
+
+    style FE fill:#06b6d4,stroke:#0891b2,color:#000
+    style GW fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style AUTH fill:#512BD4,stroke:#4318a0,color:#fff
+    style UPLOAD fill:#512BD4,stroke:#4318a0,color:#fff
+    style ORCH fill:#512BD4,stroke:#4318a0,color:#fff
+    style REPORT fill:#512BD4,stroke:#4318a0,color:#fff
+    style NOTIF fill:#512BD4,stroke:#4318a0,color:#fff
+    style AI fill:#3776AB,stroke:#2b5f8a,color:#fff
+```
+
+#### Dados e Mensageria
+
+```mermaid
+graph LR
+    subgraph Microservicos
+        AUTH["Auth Service"]
+        UPLOAD["Upload Service"]
+        ORCH["Orchestrator"]
+        AI["AI Processing"]
+        REPORT["Report Service"]
+        NOTIF["Notification"]
     end
 
     subgraph Dados
@@ -71,25 +103,9 @@ graph TB
         REDIS[("Redis<br/><small>Cache + Backplane</small>")]
     end
 
-    subgraph Observabilidade
-        OTEL["OTel Collector"]
-        PROM["Prometheus"]
+    subgraph Mensageria
+        RMQ[["RabbitMQ"]]
     end
-
-    subgraph Provedores de IA
-        GPT["OpenAI<br/>GPT-4o"]
-        GEM["Google<br/>Gemini 2.0"]
-        CLA["Anthropic<br/>Claude Sonnet"]
-    end
-
-    FE <-->|"HTTPS + JWT"| GW
-    FE <-.->|"WebSocket"| NOTIF
-
-    GW --> AUTH
-    GW --> UPLOAD
-    GW --> ORCH
-    GW --> REPORT
-    GW --> AI
 
     AUTH --- PG_AUTH
     UPLOAD --- PG_UPLOAD
@@ -99,42 +115,29 @@ graph TB
     NOTIF --- REDIS
     AI --- REDIS
 
-    UPLOAD -->|"DiagramUploaded"| RMQ
-    RMQ -->|"DiagramUploaded"| ORCH
-    ORCH -->|"ProcessingStarted"| RMQ
-    RMQ -->|"ProcessingStarted"| AI
-    AI -->|"AnalysisCompleted"| RMQ
-    RMQ -->|"AnalysisCompleted"| ORCH
-    ORCH -->|"GenerateReport"| RMQ
-    RMQ -->|"GenerateReport"| REPORT
-    REPORT -->|"ReportGenerated"| RMQ
-    RMQ -->|"ReportGenerated"| ORCH
-    ORCH -->|"StatusChanged"| RMQ
-    RMQ -->|"StatusChanged"| NOTIF
+    UPLOAD -.-> RMQ
+    ORCH -.-> RMQ
+    AI -.-> RMQ
+    REPORT -.-> RMQ
+
+    style RMQ fill:#FF6600,stroke:#cc5200,color:#fff
+```
+
+#### Provedores de IA
+
+```mermaid
+graph LR
+    AI["AI Processing<br/><small>Python FastAPI</small>"]
+
+    GPT["OpenAI<br/>GPT-4o"]
+    GEM["Google<br/>Gemini 2.0"]
 
     AI -->|"Vision API"| GPT
     AI -->|"Vision API"| GEM
-    AI -->|"Vision API"| CLA
 
-    AUTH -.-> OTEL
-    UPLOAD -.-> OTEL
-    ORCH -.-> OTEL
-    REPORT -.-> OTEL
-    NOTIF -.-> OTEL
-    OTEL --> PROM
-
-    style FE fill:#06b6d4,stroke:#0891b2,color:#000
-    style GW fill:#8b5cf6,stroke:#7c3aed,color:#fff
-    style AUTH fill:#512BD4,stroke:#4318a0,color:#fff
-    style UPLOAD fill:#512BD4,stroke:#4318a0,color:#fff
-    style ORCH fill:#512BD4,stroke:#4318a0,color:#fff
-    style REPORT fill:#512BD4,stroke:#4318a0,color:#fff
-    style NOTIF fill:#512BD4,stroke:#4318a0,color:#fff
     style AI fill:#3776AB,stroke:#2b5f8a,color:#fff
-    style RMQ fill:#FF6600,stroke:#cc5200,color:#fff
     style GPT fill:#10a37f,stroke:#0d8a6a,color:#fff
     style GEM fill:#4285F4,stroke:#3367d6,color:#fff
-    style CLA fill:#d97706,stroke:#b45309,color:#fff
 ```
 
 ### Fluxo Completo: Upload ate Relatorio
@@ -156,14 +159,14 @@ sequenceDiagram
     FE->>GW: POST /api/upload (JWT)
     GW->>UP: Proxy request
 
-    rect rgb(30, 41, 59)
+    rect rgb(220, 230, 245)
         Note over UP,DB: Upload & Persistencia
         UP->>DB: Salva metadados (PostgreSQL)
         UP->>DB: Upload arquivo (MinIO)
         UP->>MQ: DiagramUploadedEvent (Outbox)
     end
 
-    rect rgb(30, 41, 59)
+    rect rgb(220, 230, 245)
         Note over MQ,OR: Orquestracao SAGA
         MQ->>OR: DiagramUploadedEvent
         OR->>DB: Cria AnalysisSagaState
@@ -175,7 +178,7 @@ sequenceDiagram
     NT-->>FE: SignalR push (Processing)
     FE-->>User: Status: Processando...
 
-    rect rgb(30, 41, 59)
+    rect rgb(220, 230, 245)
         Note over AI: Analise Multi-Provider (paralelo)
         MQ->>AI: ProcessingStartedEvent
         AI->>DB: Download diagrama (MinIO)
@@ -184,8 +187,6 @@ sequenceDiagram
             AI->>AI: OpenAI analisa
         and Gemini 2.0 Flash
             AI->>AI: Google analisa
-        and Claude Sonnet
-            AI->>AI: Anthropic analisa
         end
 
         AI->>AI: Consensus Engine (merge + score)
@@ -193,7 +194,7 @@ sequenceDiagram
         AI->>MQ: AnalysisCompletedEvent
     end
 
-    rect rgb(30, 41, 59)
+    rect rgb(220, 230, 245)
         Note over OR,RP: Geracao de Relatorio
         MQ->>OR: AnalysisCompletedEvent
         OR->>MQ: GenerateReportCommand
@@ -206,7 +207,7 @@ sequenceDiagram
     MQ->>NT: StatusChanged
     NT-->>FE: SignalR push (Analyzed)
 
-    rect rgb(30, 41, 59)
+    rect rgb(220, 230, 245)
         Note over OR: Finalizacao
         MQ->>OR: ReportGeneratedEvent
         OR->>MQ: StatusChanged (Analyzed → Completed)
@@ -267,7 +268,6 @@ graph LR
         P1["GPT-4o<br/><small>weight: 1.0</small>"]
         P2["GPT-4o Mini<br/><small>weight: 0.8</small>"]
         P3["Gemini 2.0<br/><small>weight: 1.0</small>"]
-        P4["Claude Sonnet<br/><small>weight: 1.0</small>"]
     end
 
     subgraph Consenso["Motor de Consenso"]
@@ -289,8 +289,8 @@ graph LR
     end
 
     IMG --> PREP
-    PREP --> P1 & P2 & P3 & P4
-    P1 & P2 & P3 & P4 --> COMP
+    PREP --> P1 & P2 & P3
+    P1 & P2 & P3 --> COMP
     COMP --> CONN --> RISK --> REC --> SCORE --> CONF
     CONF --> VAL
     VAL --> RESULT
@@ -301,7 +301,6 @@ graph LR
     style P1 fill:#10a37f,stroke:#0d8a6a,color:#fff
     style P2 fill:#10a37f,stroke:#0d8a6a,color:#fff
     style P3 fill:#4285F4,stroke:#3367d6,color:#fff
-    style P4 fill:#d97706,stroke:#b45309,color:#fff
 ```
 
 ### Comunicacao entre Servicos
@@ -384,10 +383,10 @@ graph TB
         SEC4["Rate Limiting"]
     end
 
-    style Local fill:#1e293b,stroke:#334155,color:#e2e8f0
-    style K8s fill:#1e293b,stroke:#334155,color:#e2e8f0
-    style CI fill:#1e293b,stroke:#334155,color:#e2e8f0
-    style Security fill:#1e293b,stroke:#334155,color:#e2e8f0
+    style Local fill:#e0e7ff,stroke:#6366f1,color:#1e1b4b
+    style K8s fill:#dbeafe,stroke:#3b82f6,color:#1e1b4b
+    style CI fill:#e0f2fe,stroke:#0ea5e9,color:#1e1b4b
+    style Security fill:#fce7f3,stroke:#ec4899,color:#1e1b4b
 ```
 
 ---
@@ -538,7 +537,7 @@ docker-compose up -d --build
 | Risco | Descricao | Mitigacao |
 |-------|-----------|-----------|
 | Dependencia de providers externos | Indisponibilidade de APIs de IA | Retry automatico + fallback para providers disponiveis |
-| Custo de API | Chamadas a OpenAI/Anthropic tem custo | Cache por hash de arquivo (evita re-analise) |
+| Custo de API | Chamadas a OpenAI/Google tem custo | Cache por hash de arquivo (evita re-analise) |
 | Qualidade da analise | Depende da qualidade do diagrama | Guardrails + consenso + score de confianca |
 | Secret management | Secrets em env vars (nao rotacionados) | Recomendacao: Sealed Secrets em producao |
 | Criptografia em repouso | PostgreSQL sem encryption at rest | Recomendacao: habilitar em producao |
@@ -572,7 +571,7 @@ O ArchLens foi projetado com **Privacy by Design** seguindo a Lei Geral de Prote
 - **Anonimizacao em logs**: Emails mascarados (`u***@archlens.com`)
 - **Minimizacao**: Apenas dados estritamente necessarios sao coletados
 - **Audit trail**: Middleware registra todo acesso a dados pessoais
-- **Subprocessadores documentados**: OpenAI, Google Gemini, Anthropic Claude (nenhum dado pessoal enviado)
+- **Subprocessadores documentados**: OpenAI, Google Gemini (nenhum dado pessoal enviado)
 - **Politica de privacidade**: Disponivel em `/privacy-policy` no frontend
 
 > Documentacao detalhada: [LGPD.md](./LGPD.md) | [SECURITY.md](./SECURITY.md)
@@ -677,6 +676,6 @@ cd archlens-ai-processing && pytest
 
 **ArchLens** - Analise inteligente de arquitetura, alimentada por consenso de IA.
 
-*FIAP - Hackathon Fase 5 (12SOAT + 6IADT)*
+**Autor:** Rafael Henrique Barbosa Pereira (RM366243) | FIAP - Pos-Tech Software Architecture + IA para Devs | Fase 5 - Hackathon (12SOAT + 6IADT)
 
 </div>
