@@ -13,7 +13,7 @@
 [![Kubernetes](https://img.shields.io/badge/K8s-KinD-326CE5?logo=kubernetes&logoColor=white)](https://kubernetes.io)
 [![License](https://img.shields.io/badge/License-Academic-green)]()
 
-**Autor:** Rafael Henrique Barbosa Pereira (RM366243) | FIAP - Pos-Tech Software Architecture + IA para Devs | Fase 5 - Hackathon (12SOAT + 6IADT)
+**Autor:** Rafael Henrique Barbosa Pereira (RM366243)
 
 </div>
 
@@ -676,6 +676,6 @@ cd archlens-ai-processing && pytest
 
 **ArchLens** - Analise inteligente de arquitetura, alimentada por consenso de IA.
 
-**Autor:** Rafael Henrique Barbosa Pereira (RM366243) | FIAP - Pos-Tech Software Architecture + IA para Devs | Fase 5 - Hackathon (12SOAT + 6IADT)
+FIAP - Pos-Tech Software Architecture + IA para Devs | Fase 5 - Hackathon (12SOAT + 6IADT)
 
 </div>
