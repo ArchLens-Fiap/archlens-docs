@@ -1,0 +1,683 @@
+{
+  "info": {
+    "name": "ArchLens - API Collection",
+    "description": "Collection completa da API ArchLens.\n\n## Como usar\n\n1. Importe o environment `ArchLens - Local`\n2. Execute `Auth > Login (user)` para obter o token automaticamente\n3. Execute `Auth > Login (admin)` para obter o token admin\n4. Todas as requests autenticadas usam `{{auth_token}}` automaticamente\n\n## Usuarios de teste\n- **User**: user / User@123\n- **Admin**: admin / Admin@123",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [],
+  "item": [
+    {
+      "name": "Auth Service",
+      "description": "Autenticacao, registro e LGPD (direitos do titular)",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"Test@123456\",\n  \"lgpdConsent\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{gateway_url}}/auth/register",
+              "host": ["{{gateway_url}}"],
+              "path": ["auth", "register"]
+            },
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "Login (user)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) {",
+                  "    pm.environment.set('auth_token', json.token);",
+                  "    console.log('Token saved to auth_token');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user\",\n  \"password\": \"User@123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{gateway_url}}/auth/login",
+              "host": ["{{gateway_url}}"],
+              "path": ["auth", "login"]
+            },
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "Login (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) {",
+                  "    pm.environment.set('admin_token', json.token);",
+                  "    pm.environment.set('auth_token', json.token);",
+                  "    console.log('Admin token saved');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin@123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{gateway_url}}/auth/login",
+              "host": ["{{gateway_url}}"],
+              "path": ["auth", "login"]
+            },
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "Get My Data (LGPD Art. 18)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/auth/me/data",
+              "host": ["{{gateway_url}}"],
+              "path": ["auth", "me", "data"]
+            }
+          }
+        },
+        {
+          "name": "Delete My Account (LGPD Art. 18)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/auth/me",
+              "host": ["{{gateway_url}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Upload Service",
+      "description": "Upload de diagramas e consulta de status",
+      "item": [
+        {
+          "name": "Upload Diagram (PNG)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.diagramId) {",
+                  "    pm.environment.set('diagram_id', json.diagramId);",
+                  "    console.log('diagram_id saved: ' + json.diagramId);",
+                  "}",
+                  "if (json.isDuplicate) {",
+                  "    console.log('DUPLICATE detected - existing diagram returned');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Selecione um diagrama (PNG, JPG, PDF, SVG - max 20MB)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/upload/diagrams",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "upload", "diagrams"]
+            }
+          }
+        },
+        {
+          "name": "List My Diagrams",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/upload/diagrams?page=1&pageSize=20",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "upload", "diagrams"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Diagram by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/upload/diagrams/{{diagram_id}}",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "upload", "diagrams", "{{diagram_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Diagram Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/upload/diagrams/{{diagram_id}}/status",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "upload", "diagrams", "{{diagram_id}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Delete Diagram",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/upload/diagrams/{{diagram_id}}",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "upload", "diagrams", "{{diagram_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orchestrator Service",
+      "description": "Consulta de sagas e metricas de processamento",
+      "item": [
+        {
+          "name": "Get Saga by Diagram",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.analysisId) {",
+                  "    pm.environment.set('analysis_id', json.analysisId);",
+                  "    console.log('analysis_id saved: ' + json.analysisId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/orchestrator/saga/diagram/{{diagram_id}}",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "orchestrator", "saga", "diagram", "{{diagram_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Saga by Analysis",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/orchestrator/saga/analysis/{{analysis_id}}",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "orchestrator", "saga", "analysis", "{{analysis_id}}"]
+            }
+          }
+        },
+        {
+          "name": "List All Sagas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/orchestrator/saga?page=1&pageSize=20",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "orchestrator", "saga"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin - Get Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway_url}}/api/orchestrator/saga/admin/metrics",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "orchestrator", "saga", "admin", "metrics"]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{admin_token}}" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Report Service",
+      "description": "Consulta de relatorios de analise",
+      "item": [
+        {
+          "name": "Get Report by Analysis",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) {",
+                  "    pm.environment.set('report_id', json.id);",
+                  "    console.log('report_id saved: ' + json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/reports/reports/analysis/{{analysis_id}}",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "reports", "reports", "analysis", "{{analysis_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Report by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/reports/reports/{{report_id}}",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "reports", "reports", "{{report_id}}"]
+            }
+          }
+        },
+        {
+          "name": "List Reports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/reports/reports?page=1&pageSize=20",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "reports", "reports"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin - Get Report Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway_url}}/api/reports/reports/admin/metrics",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "reports", "reports", "admin", "metrics"]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{admin_token}}" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Processing",
+      "description": "Health check e chat follow-up com IA",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/ai/health",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "ai", "health"]
+            },
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "Chat Follow-up",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"analysis_id\": \"{{analysis_id}}\",\n  \"question\": \"Quais sao os principais riscos dessa arquitetura?\",\n  \"history\": []\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/ai/chat",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "ai", "chat"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Checks",
+      "description": "Health check de cada servico via Gateway",
+      "item": [
+        {
+          "name": "Gateway Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/health",
+              "host": ["{{gateway_url}}"],
+              "path": ["health"]
+            },
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "Auth Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/auth/health",
+              "host": ["{{gateway_url}}"],
+              "path": ["auth", "health"]
+            },
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "Upload Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/upload/health",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "upload", "health"]
+            },
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "Orchestrator Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/orchestrator/health",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "orchestrator", "health"]
+            },
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "Report Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/reports/health",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "reports", "health"]
+            },
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "AI Processing Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/ai/health",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "ai", "health"]
+            },
+            "auth": { "type": "noauth" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Fluxo Completo (Demo)",
+      "description": "Execute na ordem para testar o fluxo end-to-end:\n1. Login\n2. Upload\n3. Aguardar processamento (~30s)\n4. Consultar saga\n5. Consultar relatorio\n6. Chat follow-up",
+      "item": [
+        {
+          "name": "1. Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.environment.set('auth_token', json.token);",
+                  "pm.test('Login successful', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(json.token).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user\",\n  \"password\": \"User@123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{gateway_url}}/auth/login",
+              "host": ["{{gateway_url}}"],
+              "path": ["auth", "login"]
+            },
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "2. Upload Diagram",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.environment.set('diagram_id', json.diagramId);",
+                  "pm.test('Upload successful', function() {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Selecione um diagrama de arquitetura"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/upload/diagrams",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "upload", "diagrams"]
+            }
+          }
+        },
+        {
+          "name": "3. Check Saga Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.analysisId) pm.environment.set('analysis_id', json.analysisId);",
+                  "pm.test('Saga found', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    console.log('State: ' + json.currentState);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/orchestrator/saga/diagram/{{diagram_id}}",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "orchestrator", "saga", "diagram", "{{diagram_id}}"]
+            }
+          }
+        },
+        {
+          "name": "4. Get Report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) pm.environment.set('report_id', json.id);",
+                  "pm.test('Report found', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    console.log('Score: ' + json.overallScore);",
+                  "    console.log('Confidence: ' + json.confidence);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/reports/reports/analysis/{{analysis_id}}",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "reports", "reports", "analysis", "{{analysis_id}}"]
+            }
+          }
+        },
+        {
+          "name": "5. Chat Follow-up",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Chat response received', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"analysis_id\": \"{{analysis_id}}\",\n  \"question\": \"Quais sao os principais riscos dessa arquitetura e como mitiga-los?\",\n  \"history\": []\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/ai/chat",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "ai", "chat"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
