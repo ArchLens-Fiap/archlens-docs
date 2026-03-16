@@ -13,6 +13,14 @@
 [![Kubernetes](https://img.shields.io/badge/K8s-KinD-326CE5?logo=kubernetes&logoColor=white)](https://kubernetes.io)
 [![License](https://img.shields.io/badge/License-Academic-green)]()
 
+[![Auth CI](https://github.com/ArchLens-Fiap/archlens-auth-service/actions/workflows/ci.yml/badge.svg)](https://github.com/ArchLens-Fiap/archlens-auth-service/actions/workflows/ci.yml)
+[![Upload CI](https://github.com/ArchLens-Fiap/archlens-upload-service/actions/workflows/ci.yml/badge.svg)](https://github.com/ArchLens-Fiap/archlens-upload-service/actions/workflows/ci.yml)
+[![Orchestrator CI](https://github.com/ArchLens-Fiap/archlens-orchestrator-service/actions/workflows/ci.yml/badge.svg)](https://github.com/ArchLens-Fiap/archlens-orchestrator-service/actions/workflows/ci.yml)
+[![Report CI](https://github.com/ArchLens-Fiap/archlens-report-service/actions/workflows/ci.yml/badge.svg)](https://github.com/ArchLens-Fiap/archlens-report-service/actions/workflows/ci.yml)
+[![AI Processing CI](https://github.com/ArchLens-Fiap/archlens-ai-processing/actions/workflows/ci.yml/badge.svg)](https://github.com/ArchLens-Fiap/archlens-ai-processing/actions/workflows/ci.yml)
+[![Gateway CI](https://github.com/ArchLens-Fiap/archlens-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/ArchLens-Fiap/archlens-gateway/actions/workflows/ci.yml)
+[![Frontend CI](https://github.com/ArchLens-Fiap/archlens-frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/ArchLens-Fiap/archlens-frontend/actions/workflows/ci.yml)
+
 **Autor:** Rafael Henrique Barbosa Pereira (RM366243)
 
 </div>
