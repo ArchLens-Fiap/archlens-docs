@@ -1,114 +1,33 @@
 name: CI
 
+# Workflow de referencia para os repositorios do ArchLens.
+# Cada repositorio tem seu proprio ci.yml adaptado ao tipo de projeto.
+#
+# .NET Services: dotnet restore -> build -> test (XPlat Coverage) -> Trivy -> Docker Build+Push GHCR
+# Python (AI Processing): pip install -> pytest (--cov) -> Trivy -> Docker Build+Push GHCR
+# Frontend (Next.js): npm ci -> lint -> build -> Trivy -> Docker Build+Push GHCR
+# Contracts (Library): dotnet restore -> build -> Trivy (sem Docker)
+#
+# Triggers: push/PR em main
+# Docker Build: apenas em push para main (nao em PRs)
+# Security: Trivy filesystem scan + Trivy image scan
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
 
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  DOTNET_VERSION: "9.0.x"
-  PYTHON_VERSION: "3.12"
-  NODE_VERSION: "20"
-
 jobs:
-  dotnet-build-test:
-    name: .NET Build & Test
+  docs-lint:
+    name: Docs Validation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - name: Check markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Restore
-        run: dotnet restore ArchLens.sln
-        working-directory: archlens
-
-      - name: Build
-        run: dotnet build ArchLens.sln --no-restore --configuration Release
-        working-directory: archlens
-
-      - name: Test
-        run: dotnet test ArchLens.sln --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
-        working-directory: archlens
-
-      - name: Upload coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: dotnet-coverage
-          path: archlens/coverage/**/coverage.cobertura.xml
-
-  python-test:
-    name: Python Test
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: archlens/src/AIProcessing
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run tests
-        run: pytest tests/ -v --cov=app --cov-report=xml:coverage.xml --cov-report=term-missing
-
-      - name: Upload coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-coverage
-          path: archlens/src/AIProcessing/coverage.xml
-
-  frontend-build:
-    name: Frontend Build
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: archlens/src/Frontend/archlens-web
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: archlens/src/Frontend/archlens-web/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Build
-        run: npm run build
-
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    needs: [dotnet-build-test]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Run Trivy (filesystem)
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: fs
-          scan-ref: archlens
-          format: table
-          exit-code: 0
-          severity: CRITICAL,HIGH
+          use-quiet-mode: yes
+          config-file: .github/mlc_config.json
+        continue-on-error: true
