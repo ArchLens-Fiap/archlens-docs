@@ -49,7 +49,9 @@ Em equipes de engenharia, revisoes de arquitetura dependem de especialistas seni
 
 ## Arquitetura
 
-### Visao Geral do Sistema
+> Diagramas C4 detalhados (Context, Container, Component) disponiveis em [C4-DIAGRAMS.md](C4-DIAGRAMS.md)
+
+### Visao Detalhada
 
 #### Servicos e Gateway
 
