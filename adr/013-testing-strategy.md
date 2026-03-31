@@ -48,7 +48,7 @@ Adotar uma estrategia de testes em **3 niveis** com meta de 90%+ de cobertura po
 - **Naming conventions**: Controllers terminam em `Controller`, interfaces com `I`
 - **Layer dependency**: Application referencia apenas Domain
 
-### Resultados Alcancados (15/03/2026)
+### Resultados Alcancados
 
 | Servico | Testes | Cobertura |
 |---------|--------|-----------|

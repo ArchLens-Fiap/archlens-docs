@@ -1,7 +1,5 @@
 # Pipeline de Inteligencia Artificial — ArchLens
 
-> **Versao**: 1.0 | **Data**: 2026-03-30
-
 ---
 
 ## 1. Visao Geral

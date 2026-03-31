@@ -1,7 +1,6 @@
 # ADR-015: RAG com Redis Vector Search para Chat Contextual
 
 **Status:** aceita
-**Data:** 2026-03-19
 **Decisores:** Rafael Henrique Barbosa Pereira
 
 ## Contexto
