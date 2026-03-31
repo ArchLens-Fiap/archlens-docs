@@ -76,7 +76,91 @@
 
 ---
 
-## 4. Referências OWASP Top 10 (2021)
+## 4. Segurança da Inteligência Artificial
+
+### 4.1 Uso Controlado dos Modelos de IA
+
+O sistema utiliza LLMs (GPT-4o, GPT-4o Mini, Gemini 2.0 Flash) exclusivamente para analise de diagramas de arquitetura. O escopo dos modelos e rigidamente definido:
+
+| Controle | Implementacao |
+|---|---|
+| **System prompt com role fixo** | `prompts/v1/system.md` — define o papel como "ArchLens, expert software architecture analyst", limitando o dominio de atuacao |
+| **Prompt de analise estruturado** | `prompts/v1/analysis.md` — instrucoes explicitas sobre o que analisar (components, connections, risks, recommendations, scores) |
+| **JSON Schema obrigatorio** | `prompts/v1/schema.json` — forca resposta em formato JSON rigido com campos, tipos e valores esperados |
+| **Temperature baixa (0.2)** | Reduz aleatoriedade e criatividade excessiva, priorizando respostas deterministicas |
+| **response_format: json_object** | OpenAI API forcada a retornar apenas JSON valido (nao aceita texto livre) |
+
+### 4.2 Guardrails — Controle de Entrada e Saida
+
+#### Entrada (Pre-processamento)
+- **Validacao de tipo MIME**: apenas `image/png`, `image/jpeg`, `image/webp`, `application/pdf`
+- **Validacao de magic bytes**: verificacao binaria no Upload Service (nao confia no Content-Type do browser)
+- **Limite de tamanho**: maximo 20MB por arquivo
+- **Sanitizacao de filename**: remocao de caracteres especiais e path traversal (`../`)
+- **Hash SHA-256**: deduplicacao de diagramas ja analisados
+
+#### Saida (Pos-processamento)
+| Guardrail | Arquivo | Descricao |
+|---|---|---|
+| `validate_provider_response()` | `domain/guardrails.py` | Rejeita respostas sem componentes, sem scores, ou com scores fora do range 0-10 |
+| `apply_cross_reference()` | `domain/guardrails.py` | Filtra respostas invalidas quando ha minimo de confirmacoes entre providers |
+| **Consensus Engine** | `domain/consensus.py` | Fuzzy matching (Levenshtein ratio > 0.65) entre respostas de multiplos providers para mitigar alucinacoes |
+| **MIN_CONFIDENCE_THRESHOLD** | `domain/consensus.py` | Componentes mencionados por menos de 30% dos providers sao descartados |
+| **Weighted scoring** | `domain/consensus.py` | Scores finais sao media ponderada pelo peso (weight) de cada provider |
+
+### 4.3 Mitigacao de Alucinacoes
+
+A principal estrategia contra alucinacoes e o **Motor de Consenso Multi-Provider**:
+
+1. O mesmo diagrama e enviado simultaneamente para 3 providers independentes (GPT-4o, GPT-4o Mini, Gemini)
+2. As respostas sao comparadas via fuzzy matching (distancia de Levenshtein)
+3. Componentes que aparecem em apenas 1 provider (< 30% de concordancia) sao descartados
+4. Riscos duplicados entre providers sao mesclados, mantendo a descricao mais detalhada
+5. Scores finais sao media ponderada — nenhum provider isolado domina a nota
+
+**Metricas de confianca**:
+- 1 provider respondendo: confidence = 50% (degradacao graceful)
+- 2 providers concordando: confidence = 70-85%
+- 3 providers concordando: confidence = 85-100%
+
+### 4.4 Tratamento Seguro de Falhas da IA
+
+| Cenario de falha | Tratamento | Arquivo |
+|---|---|---|
+| Provider nao responde (timeout) | Ignora e usa os que responderam (graceful degradation) | `domain/analysis_service.py` |
+| Provider retorna JSON invalido | Parse falha, provider e descartado dessa analise | `adapters/*_provider.py` |
+| Provider retorna resposta sem componentes | `validate_provider_response()` rejeita a resposta | `domain/guardrails.py` |
+| Scores fora do range 0-10 | `_scores_in_range()` rejeita a resposta inteira | `domain/guardrails.py` |
+| Todos os providers falham | SAGA transiciona para estado `Failed`, evento `AnalysisFailedEvent` publicado, usuario notificado via SignalR | SAGA state machine |
+| SAGA retry (ate 3x) | Orchestrator reenvia `ProcessingStartedEvent` automaticamente | `AnalysisSagaStateMachine.cs` |
+
+### 4.5 Comunicacao Segura entre Servicos
+
+| Pratica | Implementacao |
+|---|---|
+| JWT Bearer em todas as rotas REST | Gateway valida token antes de rotear |
+| RabbitMQ com credenciais autenticadas | Username/password em todos os ambientes |
+| MinIO com access key/secret key | Nao utiliza acesso anonimo (corrigido) |
+| Correlation ID propagado | `X-Correlation-Id` header em todas as requisicoes para rastreabilidade |
+| CORS restrito | Apenas o frontend autorizado (`http://localhost:3000`) |
+
+### 4.6 Riscos e Limitacoes de Seguranca da IA
+
+| Risco | Severidade | Mitigacao | Status |
+|---|---|---|---|
+| Prompt injection via nome do arquivo | Baixo | Filename sanitizado antes de chegar ao prompt | ✅ Mitigado |
+| Prompt injection via conteudo do diagrama | Baixo | Imagem binaria (nao texto), dificil injetar instrucoes | ⚠️ Risco aceito |
+| Alucinacao: componentes inventados | Medio | Consensus Engine descarta componentes nao confirmados por multiplos providers | ✅ Mitigado |
+| Alucinacao: scores inflados | Medio | Prompt instrui "don't inflate scores" + media ponderada entre providers | ✅ Mitigado |
+| Vazamento de dados via API de IA | Medio | Diagramas sao enviados a APIs externas (OpenAI, Google) sem anonimizacao | ⚠️ Documentado |
+| Dependencia de APIs externas | Alto | Graceful degradation — funciona com 1 provider; providers sao substituiveis | ⚠️ Risco aceito |
+| Rate limit das APIs gratuitas | Medio | GitHub Models ~150 req/dia; Gemini sem limite no tier gratuito | ⚠️ Documentado |
+
+---
+
+---
+
+## 5. Referências OWASP Top 10 (2021)
 
 | Código | Vulnerabilidade | Cobertura |
 |---|---|---|
