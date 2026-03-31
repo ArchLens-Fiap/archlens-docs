@@ -445,7 +445,16 @@ graph TB
 - Python 3.11+ (para AI Processing local)
 - Node.js 18+ (para frontend local)
 
-### Modo Docker (mais simples)
+### 1. Configurar Secrets (primeiro uso)
+
+```bash
+# Gera os arquivos .env em cada microsservico automaticamente
+./archlens-docs/scripts/setup-secrets.sh
+```
+
+> Este script cria os `.env` necessarios para infra (Docker Compose), AI Processing (Python) e Frontend (Next.js) a partir das credenciais academicas. Basta executar uma vez.
+
+### 2. Modo Docker (mais simples)
 
 ```bash
 # Clonar e subir tudo
@@ -459,7 +468,7 @@ docker-compose up -d --build
 ./archlens-docs/scripts/start.sh docker
 ```
 
-### Modo Local (desenvolvimento)
+### 3. Modo Local (desenvolvimento)
 
 ```bash
 # Subir apenas infraestrutura via Docker
