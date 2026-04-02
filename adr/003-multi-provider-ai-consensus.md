@@ -12,20 +12,20 @@ O sistema precisa analisar diagramas de arquitetura usando IA. Depender de um un
 
 ## Decisao
 
-Usar **2 providers de IA em paralelo** (OpenAI GPT-4o Vision via GitHub Models, Google Gemini 2.0 Flash) com um **Consensus Engine** que faz merge dos resultados. A arquitetura suporta N providers — novos podem ser adicionados apenas registrando no `ProviderRegistry`.
+Usar **3 providers de IA em paralelo** (OpenAI GPT-4o, OpenAI GPT-4o Mini via GitHub Models, Google Gemini 2.0 Flash) com um **Consensus Engine** que faz merge dos resultados. A arquitetura suporta N providers — novos podem ser adicionados apenas registrando no `ProviderRegistry`.
 
 ### Pipeline
 
 ```
-Diagrama → Preprocessing → [OpenAI GPT-4o | Gemini 2.0 Flash] → Consensus Engine → Guardrails → Resultado
+Diagrama → Preprocessing → [OpenAI GPT-4o | GPT-4o Mini | Gemini 2.0 Flash] → Consensus Engine → Guardrails → Resultado
 ```
 
 ### Consensus Engine
 
-- **Componentes**: merge via fuzzy matching (Levenshtein distance, threshold 80%) + contagem de votos
+- **Componentes**: merge via fuzzy matching (Levenshtein distance, threshold 65%) + contagem de votos
 - **Riscos/Recomendacoes**: deduplicacao semantica via similaridade fuzzy
 - **Scores**: media ponderada por peso do provider (configuravel)
-- **Confidence**: calculada por nivel de concordancia entre providers (3/3 = alta, 2/3 = media, 1/3 = baixa)
+- **Confidence**: calculada por nivel de concordancia entre providers (N/N = alta, parcial = media, 1/N = baixa)
 
 ### Guardrails
 
@@ -58,4 +58,4 @@ Diagrama → Preprocessing → [OpenAI GPT-4o | Gemini 2.0 Flash] → Consensus 
 - Confidence > 70% em media para diagramas padrao (microservices, monolito)
 - Tempo total < 60s com N providers em paralelo
 - Sistema funcional com apenas 1 provider ativo
-- Providers atuais: OpenAI GPT-4o (via GitHub Models, gratuito) e Google Gemini 2.0 Flash (via Google AI Studio, gratuito)
+- Providers atuais: OpenAI GPT-4o (weight 1.0), OpenAI GPT-4o Mini (weight 0.8) via GitHub Models, e Google Gemini 2.0 Flash (weight 1.0) via Google AI Studio — todos gratuitos

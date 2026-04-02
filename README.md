@@ -39,7 +39,7 @@ Em equipes de engenharia, revisoes de arquitetura dependem de especialistas seni
 
 ### Diferenciais
 
-- **Multi-provider AI com Consenso** - Nao depende de um unico modelo; combina respostas de GPT-4o e Gemini via fuzzy matching (Levenshtein)
+- **Multi-provider AI com Consenso** - Nao depende de um unico modelo; combina respostas de GPT-4o, GPT-4o Mini e Gemini via fuzzy matching (Levenshtein)
 - **SAGA Orquestrada** - Fluxo assincrono resiliente com retry automatico e rastreabilidade completa
 - **Real-time** - Atualizacoes instantaneas via SignalR + Redis backplane
 - **Observabilidade Integrada** - Admin dashboard com Prometheus, sem depender de ferramentas externas
@@ -142,13 +142,16 @@ graph LR
     AI["AI Processing<br/><small>Python FastAPI</small>"]
 
     GPT["OpenAI<br/>GPT-4o"]
-    GEM["Google<br/>Gemini 2.0"]
+    MINI["OpenAI<br/>GPT-4o Mini"]
+    GEM["Google<br/>Gemini 2.0 Flash"]
 
     AI -->|"Vision API"| GPT
+    AI -->|"Vision API"| MINI
     AI -->|"Vision API"| GEM
 
     style AI fill:#3776AB,stroke:#2b5f8a,color:#fff
     style GPT fill:#10a37f,stroke:#0d8a6a,color:#fff
+    style MINI fill:#10a37f,stroke:#0d8a6a,color:#fff
     style GEM fill:#4285F4,stroke:#3367d6,color:#fff
 ```
 
@@ -523,7 +526,9 @@ docker-compose up -d --build
 | **Headers de Seguranca** | X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy |
 | **Rate Limiting** | FixedWindowRateLimiter em todos os servicos (auth-strict: 5 req/15s) |
 | **Validacao de Entrada** | FluentValidation em todos os endpoints, magic bytes no upload |
-| **HTTPS/TLS** | Comunicacao criptografada entre todos os servicos |
+| **HTTPS/TLS** | HTTPS no Ingress (K8s); rede privada Docker entre containers em dev |
+| **Encryption at Rest** | MinIO SSE-S3 (AES-256), PostgreSQL data checksums, estrategia de volume criptografado |
+| **Network Policies** | Zero Trust: default-deny-all + 16 policies per-service no K8s (ADR-016) |
 | **Containers** | runAsNonRoot, drop ALL capabilities, readOnlyRootFilesystem |
 | **Scan de Vulnerabilidades** | Trivy em todas as imagens Docker |
 | **Secrets** | Nenhum hardcoded, tudo via variaveis de ambiente |
@@ -535,7 +540,7 @@ docker-compose up -d --build
 | # | Vulnerabilidade | Mitigacao |
 |---|----------------|-----------|
 | A01 | Broken Access Control | JWT + Role-based policies + Gateway authorization |
-| A02 | Cryptographic Failures | BCrypt + HMAC-SHA256 + TLS |
+| A02 | Cryptographic Failures | BCrypt + HMAC-SHA256 + TLS + SSE-S3 encryption at rest |
 | A03 | Injection | FluentValidation + parametrized queries (EF Core) |
 | A04 | Insecure Design | Clean Architecture + DDD + input validation |
 | A05 | Security Misconfiguration | Security headers middleware + rate limiting |
@@ -561,7 +566,7 @@ docker-compose up -d --build
 | Custo de API | Chamadas a OpenAI/Google tem custo | Cache por hash de arquivo (evita re-analise) |
 | Qualidade da analise | Depende da qualidade do diagrama | Guardrails + consenso + score de confianca |
 | Secret management | Secrets em env vars (nao rotacionados) | Recomendacao: Sealed Secrets em producao |
-| Criptografia em repouso | PostgreSQL sem encryption at rest | Recomendacao: habilitar em producao |
+| Criptografia em repouso | MinIO SSE-S3 ativo; PostgreSQL/MongoDB dependem de volume criptografado | Produção: EBS/GCP encryption + Sealed Secrets para chaves |
 
 ---
 
@@ -645,13 +650,19 @@ archlens/
 
 ## Testes
 
-| Servico | Tipo | Framework |
-|---------|------|-----------|
-| Upload | Unit + Architecture | xUnit + ArchUnitNET |
-| Auth | Unit | xUnit + FluentAssertions |
-| Report | Unit | xUnit + FluentAssertions |
-| Orchestrator | Unit + SAGA | xUnit + MassTransit TestHarness |
-| AI Processing | Unit | pytest (models, consensus, guardrails) |
+> 953+ testes no total, 90%+ cobertura em todos os servicos. 63 cenarios BDD com Reqnroll. 30 testes E2E com Playwright.
+
+| Servico | Testes | Cobertura | Framework |
+|---------|--------|-----------|-----------|
+| Upload | 230 | 98.4% | xUnit + ArchUnitNET + BDD Reqnroll |
+| Auth | 178 | 91.5% | xUnit + FluentAssertions + BDD Reqnroll |
+| Report | 170 | 92.8% | xUnit + FluentAssertions + BDD Reqnroll |
+| Orchestrator | 103 | 90%+ | xUnit + MassTransit TestHarness + BDD Reqnroll |
+| Notification | 48 | 90%+ | xUnit + BDD Reqnroll |
+| Gateway | 28 | 93.3% | xUnit (middlewares, integration) |
+| AI Processing | 166 | 92% | pytest (providers, consensus, guardrails, RAG) |
+| Frontend | 208 | 95% | Vitest + React Testing Library |
+| Frontend E2E | 30 | — | Playwright (Chromium) |
 
 ```bash
 # Executar todos os testes .NET
@@ -659,9 +670,17 @@ dotnet test archlens-auth-service/
 dotnet test archlens-upload-service/
 dotnet test archlens-report-service/
 dotnet test archlens-orchestrator-service/
+dotnet test archlens-notification-service/
+dotnet test archlens-gateway/
 
 # Executar testes Python
 cd archlens-ai-processing && pytest
+
+# Executar testes Frontend (unit)
+cd archlens-frontend && npm test
+
+# Executar testes E2E (requer frontend rodando em localhost:3000)
+cd archlens-frontend && npm run test:e2e
 ```
 
 ---
@@ -670,13 +689,23 @@ cd archlens-ai-processing && pytest
 
 | ADR | Decisao | Motivacao |
 |-----|---------|-----------|
-| [001](./adr/ADR-001-polyrepo-clean-arch.md) | Polyrepo + Clean Architecture | Independencia de deploy, ownership claro por servico |
-| [002](./adr/ADR-002-polyglot.md) | Polyglot (.NET 9 + Python) | Melhor ferramenta para cada dominio (enterprise + AI) |
-| [003](./adr/ADR-003-multi-provider-ai.md) | Multi-provider AI + Consenso | Elimina vies de modelo unico, aumenta confiabilidade |
-| [004](./adr/ADR-004-saga-orchestrated.md) | SAGA Orquestrada (MassTransit) | Rastreabilidade completa, retry automatico, estado persistido |
-| [005](./adr/ADR-005-event-driven-outbox.md) | Event-driven + Outbox Pattern | Consistencia eventual garantida, zero mensagens perdidas |
-| [006](./adr/ADR-006-observability.md) | OpenTelemetry + Prometheus + Grafana | Traces distribuidos, metricas unificadas, stack CNCF |
-| [007](./adr/ADR-007-signalr-realtime.md) | SignalR + Redis backplane | Real-time bidirecional, escalavel horizontalmente |
+| [001](./adr/001-monorepo-clean-architecture.md) | Polyrepo + Clean Architecture | Independencia de deploy, ownership claro por servico |
+| [002](./adr/002-polyglot-dotnet-python.md) | Polyglot (.NET 9 + Python) | Melhor ferramenta para cada dominio (enterprise + AI) |
+| [003](./adr/003-multi-provider-ai-consensus.md) | Multi-provider AI + Consenso | Elimina vies de modelo unico, aumenta confiabilidade |
+| [004](./adr/004-saga-orchestration-masstransit.md) | SAGA Orquestrada (MassTransit) | Rastreabilidade completa, retry automatico, estado persistido |
+| [005](./adr/005-event-driven-rabbitmq-outbox.md) | Event-driven + Outbox Pattern | Consistencia eventual garantida, zero mensagens perdidas |
+| [006](./adr/006-observability-stack.md) | OpenTelemetry + Prometheus + Grafana | Traces distribuidos, metricas unificadas, stack CNCF |
+| [007](./adr/007-signalr-realtime-redis.md) | SignalR + Redis backplane | Real-time bidirecional, escalavel horizontalmente |
+| [008](./adr/008-kind-cluster-local.md) | KinD para cluster local | Kubernetes real em dev, sem overhead de cloud |
+| [009](./adr/009-kustomize-manifests.md) | Kustomize para manifests K8s | Overlays por ambiente, sem templates complexos |
+| [010](./adr/010-lgpd-compliance-strategy.md) | Estrategia LGPD | Privacy by Design, direitos do titular, auditoria |
+| [011](./adr/011-mongodb-report-service.md) | MongoDB para Report Service | Documentos flexiveis, schema-free para relatorios |
+| [012](./adr/012-nextjs-shadcn-frontend.md) | Next.js 16 + shadcn/ui | SSR, React 19, TanStack Query, componentes acessiveis |
+| [013](./adr/013-testing-strategy.md) | Estrategia de Testes | Unit + Integration + BDD + Architecture tests |
+| [014](./adr/014-cicd-github-actions.md) | CI/CD com GitHub Actions | Build, test, scan, deploy por repo independente |
+| [015](./adr/015-rag-redis-vector-search.md) | RAG com Redis Vector Search | Chat contextual com embeddings e similarity search |
+| [016](./adr/016-network-policies-zero-trust.md) | Network Policies — Zero Trust | Isolamento pod-a-pod com default-deny e per-service rules |
+| [017](./adr/017-encryption-at-rest.md) | Criptografia em Repouso | MinIO SSE-S3, PostgreSQL checksums, estrategia de volume |
 
 ---
 

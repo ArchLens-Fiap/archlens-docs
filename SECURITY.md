@@ -1,7 +1,5 @@
 # Segurança — Riscos, Mitigações e Limitações
 
-> **Versão**: 1.0 | **Data**: 2026-01-10 | **Fase**: 9.1
-
 ---
 
 ## 1. Controles Implementados

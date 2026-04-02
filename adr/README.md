@@ -26,6 +26,9 @@ Status possiveis: `aceita` | `substituida` | `depreciada`
 | [012](012-nextjs-shadcn-frontend.md) | Next.js 16 + shadcn/ui + React Query para Frontend | aceita |
 | [013](013-testing-strategy.md) | Estrategia de Testes (Unit + Integration + Architecture) | aceita |
 | [014](014-cicd-github-actions.md) | CI/CD com GitHub Actions e Path-based Triggers | aceita |
+| [015](015-rag-redis-vector-search.md) | RAG com Redis Vector Search | aceita |
+| [016](016-network-policies-zero-trust.md) | Network Policies — Zero Trust no Kubernetes | aceita |
+| [017](017-encryption-at-rest.md) | Criptografia em Repouso (Encryption at Rest) | aceita |
 
 ## Processo de revisao
 
